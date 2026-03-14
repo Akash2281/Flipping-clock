@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flip Clock - Working</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0a0c12;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Arial", sans-serif;
+        padding: 20px;
+        transition: background 0.3s;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+      }
+
+      .clock-box {
+        background: rgba(20, 25, 35, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 60px;
+        padding: 40px;
+        box-shadow: 0 30px 50px rgba(0, 0, 0, 0.8);
+        border-bottom: 3px solid #3a4055;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding: 0 20px;
+      }
+
+      .menu-btn {
+        background: #1e2638;
+        color: #aab9ff;
+        font-size: 28px;
+        line-height: 1;
+        padding: 5px 20px;
+        border-radius: 40px;
+        cursor: pointer;
+        box-shadow:
+          inset 0 -3px 0 #0b0f1a,
+          0 5px 10px black;
+        border: 1px solid #3f4a66;
+        user-select: none;
+      }
+
+      .ampm {
+        background: #1e2638;
+        color: #aac3ff;
+        font-size: 24px;
+        font-weight: bold;
+        padding: 8px 25px;
+        border-radius: 40px;
+        box-shadow:
+          inset 0 -3px 0 #0b0f1a,
+          0 5px 10px black;
+        border: 1px solid #3f4a66;
+      }
+
+      .fullscreen {
+        background: #1e2638;
+        color: #aab9ff;
+        font-size: 28px;
+        width: 60px;
+        height: 60px;
+        border-radius: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow:
+          inset 0 -3px 0 #0b0f1a,
+          0 5px 10px black;
+        border: 1px solid #3f4a66;
+      }
+
+      /* FLIP CLOCK */
+      .flip-clock {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 30px 0;
+        flex-wrap: wrap;
+      }
+
+      .digit-block {
+        position: relative;
+        width: 100px;
+        height: 140px;
+        background: #1a1f2c;
+        border-radius: 20px;
+        box-shadow:
+          0 15px 20px black,
+          inset 0 -3px 5px #2f364a,
+          inset 0 3px 5px #454f6b;
+      }
+
+      .top-flap,
+      .bottom-flap {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 80px;
+        font-weight: bold;
+        color: #f0f6ff;
+        text-shadow: 0 5px 8px black;
+        overflow: hidden;
+        backface-visibility: hidden;
+      }
+
+      .top-flap {
+        top: 0;
+        border-radius: 18px 18px 5px 5px;
+        align-items: flex-start;
+        padding-top: 15px;
+        background: #1a1f2c;
+        border-bottom: 2px solid #38405a;
+        box-shadow: inset 0 8px 8px -5px black;
+      }
+
+      .bottom-flap {
+        bottom: 0;
+        border-radius: 5px 5px 18px 18px;
+        align-items: flex-end;
+        padding-bottom: 15px;
+        background: #151b27;
+        border-top: 2px solid #2b3245;
+        box-shadow: inset 0 -8px 8px -5px black;
+      }
+
+      .moving-flap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: #1a1f2c;
+        border-radius: 18px 18px 5px 5px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 15px;
+        font-size: 80px;
+        font-weight: bold;
+        color: #f0f6ff;
+        text-shadow: 0 5px 8px black;
+        transform-origin: bottom center;
+        backface-visibility: hidden;
+        border-bottom: 2px solid #3d4663;
+        box-shadow:
+          inset 0 8px 8px -5px black,
+          0 5px 10px black;
+        pointer-events: none;
+      }
+
+      .separator {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin: 0 5px;
+      }
+
+      .dot {
+        width: 15px;
+        height: 15px;
+        background: #2a3248;
+        border-radius: 50%;
+        box-shadow:
+          inset 0 -3px 3px #0f131e,
+          0 3px 5px black;
+        border: 1px solid #475174;
+      }
+
+      @keyframes flip {
+        0% {
+          transform: rotateX(0deg);
+        }
+        100% {
+          transform: rotateX(-90deg);
+        }
+      }
+
+      .flipping {
+        animation: flip 0.2s ease-in forwards;
+      }
+
+      .hidden-top {
+        opacity: 0;
+      }
+
+      /* FEATURE PANEL */
+      .panel {
+        background: rgba(25, 30, 42, 0.98);
+        backdrop-filter: blur(10px);
+        border-radius: 40px;
+        margin-top: 30px;
+        padding: 30px;
+        border: 1px solid #49537a;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        color: white;
+      }
+
+      .section {
+        background: #1f273b;
+        border-radius: 30px;
+        padding: 20px;
+        box-shadow:
+          inset 0 1px 3px #58658b,
+          0 10px 15px black;
+      }
+
+      .section h3 {
+        color: #adc0ff;
+        margin-bottom: 15px;
+        font-size: 20px;
+        border-left: 4px solid #6f8cff;
+        padding-left: 15px;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 10px 0;
+        align-items: center;
+      }
+
+      button,
+      .file-label,
+      select,
+      input[type="color"] {
+        background: #2d364f;
+        color: white;
+        border: 1px solid #6575a8;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 5px 8px black;
+        transition: 0.1s;
+      }
+
+      button:active,
+      .file-label:active {
+        transform: scale(0.95);
+        background: #3d4a6b;
+      }
+
+      input[type="color"] {
+        width: 50px;
+        height: 45px;
+        padding: 3px;
+      }
+
+      select {
+        min-width: 150px;
+      }
+
+      input[type="range"] {
+        width: 120px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 700px) {
+        .digit-block {
+          width: 70px;
+          height: 100px;
+        }
+        .top-flap,
+        .bottom-flap,
+        .moving-flap {
+          font-size: 55px;
+        }
+        .ampm {
+          font-size: 18px;
+          padding: 5px 15px;
+        }
+      }
+    </style>
+  </head>
+  <body id="mainBody">
+    <video
+      id="bgVideo"
+      loop
+      muted
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        display: none;
+      "
+    ></video>
+
+    <div class="container">
+      <div class="clock-box">
+        <div class="header">
+          <div class="menu-btn" id="menuToggle">•••</div>
+          <div class="ampm" id="ampmDisplay">AM</div>
+          <div class="fullscreen" id="fullscreenBtn">⤢</div>
+        </div>
+
+        <!-- FLIP CLOCK - DEFINITELY VISIBLE -->
+        <div class="flip-clock" id="clockContainer">
+          <!-- Hours -->
+          <div class="digit-block">
+            <div class="top-flap" id="h1top">1</div>
+            <div class="bottom-flap" id="h1bottom">1</div>
+            <div class="moving-flap" id="h1moving">1</div>
+          </div>
+          <div class="digit-block">
+            <div class="top-flap" id="h2top">2</div>
+            <div class="bottom-flap" id="h2bottom">2</div>
+            <div class="moving-flap" id="h2moving">2</div>
+          </div>
+
+          <div class="separator">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+
+          <!-- Minutes -->
+          <div class="digit-block">
+            <div class="top-flap" id="m1top">3</div>
+            <div class="bottom-flap" id="m1bottom">3</div>
+            <div class="moving-flap" id="m1moving">3</div>
+          </div>
+          <div class="digit-block">
+            <div class="top-flap" id="m2top">4</div>
+            <div class="bottom-flap" id="m2bottom">4</div>
+            <div class="moving-flap" id="m2moving">4</div>
+          </div>
+
+          <div class="separator">
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
+
+          <!-- Seconds -->
+          <div class="digit-block">
+            <div class="top-flap" id="s1top">5</div>
+            <div class="bottom-flap" id="s1bottom">5</div>
+            <div class="moving-flap" id="s1moving">5</div>
+          </div>
+          <div class="digit-block">
+            <div class="top-flap" id="s2top">6</div>
+            <div class="bottom-flap" id="s2bottom">6</div>
+            <div class="moving-flap" id="s2moving">6</div>
+          </div>
+        </div>
+
+        <!-- FEATURE PANEL (hidden by default) -->
+        <div class="panel" id="featurePanel" style="display: none"></div>
+      </div>
+    </div>
+
+    <script>
+      // ========== SIMPLE, WORKING FLIP CLOCK ==========
+
+      // Get current time
+      function getCurrentTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        let ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+
+        return {
+          h1: Math.floor(hours / 10) || 0,
+          h2: hours % 10,
+          m1: Math.floor(now.getMinutes() / 10),
+          m2: now.getMinutes() % 10,
+          s1: Math.floor(now.getSeconds() / 10),
+          s2: now.getSeconds() % 10,
+          ampm: ampm,
+        };
+      }
+
+      // Store current state
+      let clockState = {
+        h1: 0,
+        h2: 0,
+        m1: 0,
+        m2: 0,
+        s1: 0,
+        s2: 0,
+      };
+
+      // DOM elements
+      const digits = ["h1", "h2", "m1", "m2", "s1", "s2"];
+      const elements = {};
+
+      digits.forEach((id) => {
+        elements[id] = {
+          top: document.getElementById(id + "top"),
+          bottom: document.getElementById(id + "bottom"),
+          moving: document.getElementById(id + "moving"),
+        };
+      });
+
+      const ampmEl = document.getElementById("ampmDisplay");
+
+      // Update display immediately
+      function updateDisplay() {
+        const time = getCurrentTime();
+
+        digits.forEach((id) => {
+          if (elements[id].top) {
+            elements[id].top.textContent = time[id];
+            elements[id].bottom.textContent = time[id];
+            elements[id].moving.textContent = time[id];
+            clockState[id] = time[id];
+          }
+        });
+
+        ampmEl.textContent = time.ampm;
+      }
+
+      // Flip animation for a digit
+      function flipDigit(id, newValue) {
+        const oldValue = clockState[id];
+        if (oldValue == newValue) return;
+
+        const el = elements[id];
+        if (!el || !el.top || !el.moving) return;
+
+        // Set moving flap to old value and animate
+        el.moving.textContent = oldValue;
+        el.moving.classList.remove("flipping");
+        void el.moving.offsetWidth; // Force reflow
+
+        // Hide top static briefly
+        el.top.classList.add("hidden-top");
+
+        // Start animation
+        el.moving.classList.add("flipping");
+
+        // After animation completes
+        setTimeout(() => {
+          el.top.textContent = newValue;
+          el.bottom.textContent = newValue;
+          el.top.classList.remove("hidden-top");
+          el.moving.classList.remove("flipping");
+          el.moving.textContent = newValue;
+          clockState[id] = newValue;
+        }, 180);
+      }
+
+      // Update clock with animations
+      function tick() {
+        const time = getCurrentTime();
+
+        digits.forEach((id) => {
+          if (clockState[id] != time[id]) {
+            flipDigit(id, time[id]);
+          }
+        });
+
+        ampmEl.textContent = time.ampm;
+      }
+
+      // Initialize
+      updateDisplay();
+
+      // Start ticking every second
+      setInterval(tick, 1000);
+
+      // Also sync with actual seconds
+      setTimeout(() => {
+        const now = new Date();
+        setTimeout(tick, 1000 - now.getMilliseconds());
+      }, 0);
+
+      // ========== FEATURE PANEL ==========
+
+      const panel = document.getElementById("featurePanel");
+      const menuBtn = document.getElementById("menuToggle");
+      let panelOpen = false;
+
+      // 100 fonts
+      const fonts = [
+        "Arial",
+        "Verdana",
+        "Times New Roman",
+        "Courier New",
+        "Georgia",
+        "Palatino",
+        "Garamond",
+        "Bookman",
+        "Avantgarde",
+        "Helvetica",
+        "Calibri",
+        "Candara",
+        "Futura",
+        "Impact",
+        "Lucida Grande",
+        "Tahoma",
+        "Trebuchet MS",
+        "Segoe UI",
+        "Roboto",
+        "Open Sans",
+        "Lato",
+        "Montserrat",
+        "Oswald",
+        "Raleway",
+        "Ubuntu",
+        "Poppins",
+        "Nunito",
+        "Playfair Display",
+        "Merriweather",
+        "PT Sans",
+        "Source Sans Pro",
+        "Quicksand",
+        "Fira Sans",
+        "Dosis",
+        "Cabin",
+        "Josefin Sans",
+        "Pacifico",
+        "Lobster",
+        "Abril Fatface",
+        "Bebas Neue",
+        "Anton",
+        "Creepster",
+        "Bangers",
+        "Luckiest Guy",
+        "Fredoka",
+        "Righteous",
+        "Alfa Slab",
+        "Patua One",
+        "Passion One",
+        "Archivo Black",
+        "Carter One",
+        "Kalam",
+        "Shadows Into Light",
+        "Permanent Marker",
+        "Indie Flower",
+        "Gloria Hallelujah",
+        "Caveat",
+        "Amatic SC",
+        "Dancing Script",
+        "Satisfy",
+        "Great Vibes",
+        "Allura",
+        "Sacramento",
+        "Parisienne",
+        "Alex Brush",
+        "Homemade Apple",
+        "Rock Salt",
+        "Special Elite",
+        "VT323",
+        "Inconsolata",
+        "Source Code Pro",
+        "Fira Code",
+        "Space Mono",
+        "Cousine",
+        "Nanum Gothic",
+        "Noto Sans",
+        "Oxygen",
+        "Cantarell",
+        "Kanit",
+        "Prompt",
+        "Sriracha",
+        "Mali",
+        "Itim",
+        "Chonburi",
+        "Fahkwang",
+        "Pattaya",
+        "Bai Jamjuree",
+        "Krub",
+        "Sarabun",
+        "Mitr",
+        "Athiti",
+        "Charm",
+        "Thasadith",
+        "Maitree",
+        "K2D",
+        "Niramit",
+        "Srisakdi",
+        "Warnes",
+        "Fruktur",
+        "Eater",
+        "Goblin One",
+        "Butcherman",
+        "Frijole",
+        "Henny Penny",
+        "Iceberg",
+        "Jolly Lodger",
+        "Keania One",
+        "Lemonada",
+        "Miltonian",
+        "Nosifer",
+      ];
+
+      // 50 effects
+      const effects = [
+        "Shadow",
+        "Glow",
+        "Outline",
+        "Neon Blue",
+        "Neon Pink",
+        "Neon Green",
+        "Fire",
+        "Ice",
+        "Retro",
+        "Deep",
+        "Soft",
+        "Matrix",
+        "Royal",
+        "Sunset",
+        "Vintage",
+        "Metal",
+        "Hologram",
+        "Candy",
+        "Ocean",
+        "Forest",
+        "Lava",
+        "Twilight",
+        "Gold",
+        "Silver",
+        "Bronze",
+        "Rainbow",
+        "Pixel",
+        "Comic",
+        "Emboss",
+        "Engrave",
+        "Glitch",
+        "Vaporwave",
+        "Synthwave",
+        "Cyber",
+        "Acid",
+        "Bubble",
+        "Crystal",
+        "Liquid",
+        "Smoke",
+        "Mist",
+        "Depth",
+        "3D",
+        "Long Shadow",
+        "Neon Purple",
+        "Neon Orange",
+        "Neon Yellow",
+        "Neon Red",
+        "Pastel",
+        "Graffiti",
+        "Sketch",
+      ];
+
+      const effectStyles = {
+        Shadow: "4px 4px 8px black",
+        Glow: "0 0 15px #7ec8ff, 0 0 30px #3a6ea5",
+        Outline: "0 0 3px #000, 1px 1px 2px #fff, -1px -1px 2px #aaccff",
+        "Neon Blue": "0 0 10px #00f, 0 0 20px #00f, 0 0 30px #00f",
+        "Neon Pink": "0 0 10px #ff44ee, 0 0 20px #ff44ee, 0 0 30px #ff44ee",
+        "Neon Green": "0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0",
+        Fire: "0 0 10px #f90, 0 0 20px #f60, 2px 2px 4px #c30",
+        Ice: "0 0 15px #aaf, 0 0 30px #6cf, -1px -1px 3px #fff",
+        Retro: "3px 3px 0 #9af, 5px 5px 0 #36c",
+        Deep: "0 8px 12px black, 0 2px 3px #666",
+        Soft: "2px 2px 6px rgba(0,0,0,0.5), -1px -1px 2px #aaf",
+        Matrix: "0 0 8px #0f0, 1px 1px 5px #0a0, -1px -1px 2px #0c0",
+        Royal: "0 0 20px #b19cd9, 2px 2px 4px #4b0082",
+        Sunset: "0 0 15px #ff7b7b, 0 0 30px #ffb347, 2px 2px 5px #c45",
+        Vintage: "3px 3px 6px #8b4513, -1px -1px 2px #d2b48c",
+        Metal: "0 5px 8px #888, 0 10px 15px #333, inset 0 0 5px #fff",
+        Hologram: "0 0 10px #ff00ff, 0 0 20px #00ffff, 2px 2px 5px #ffffff80",
+        Candy: "0 0 10px #ff69b4, 0 0 20px #ff1493, 2px 2px 4px #c71585",
+        Ocean: "0 0 12px #1e90ff, 0 0 25px #00ced1, -1px -1px 3px #afeeee",
+        Forest: "0 0 8px #228b22, 0 0 16px #32cd32, 1px 1px 5px #006400",
+        Lava: "0 0 15px #ff4500, 0 0 30px #ff8c00, 2px 2px 6px #8b0000",
+        Twilight: "0 0 10px #9370db, 0 0 20px #4b0082, 0 0 30px #2e0854",
+        Gold: "0 0 12px #ffd700, 0 0 24px #b8860b, 2px 2px 5px #8b6914",
+        Silver: "0 0 12px #c0c0c0, 0 0 24px #a9a9a9, 1px 1px 5px #808080",
+        Bronze: "0 0 10px #cd7f32, 0 0 20px #b87333, 2px 2px 5px #8b5a2b",
+        Rainbow:
+          "0 0 8px #f00, 0 0 15px #ff0, 0 0 22px #0f0, 0 0 30px #00f, 2px 2px 5px #f0f",
+        Pixel: "2px 2px 0 #fff, 4px 4px 0 #000",
+        Comic: "3px 3px 0 #ff69b4, 5px 5px 0 #4b0082",
+        Emboss: "-1px -1px 1px #fff, 1px 1px 2px #000",
+        Engrave: "1px 1px 1px #000, -1px -1px 1px #fff",
+        Glitch: "2px 2px 0 #f0f, -2px -2px 0 #0ff",
+        Vaporwave: "0 0 10px #ff71ce, 0 0 20px #01cdfe, 2px 2px 5px #b967ff",
+        Synthwave: "0 0 8px #ff2b9c, 0 0 16px #ff2b9c, 2px 2px 8px #00fff9",
+        Cyber: "0 0 10px #0ff, 0 0 20px #0ff, 2px 2px 10px #f0f",
+        Acid: "0 0 12px #39ff14, 0 0 24px #bfff00, 1px 1px 6px #7cfc00",
+        Bubble: "0 0 8px #fff, 0 0 16px #87ceeb, 0 0 24px #4682b4",
+        Crystal: "0 0 10px #e0ffff, 0 0 20px #b0e0e6, 1px 1px 8px #87cefa",
+        Liquid: "2px 2px 8px #00ced1, -1px -1px 4px #20b2aa, 0 0 12px #5f9ea0",
+        Smoke: "0 0 10px #a9a9a9, 0 0 20px #696969, 1px 1px 5px #2f4f4f",
+        Mist: "0 0 12px #d3d3d3, 0 0 24px #c0c0c0, -1px -1px 5px #a0a0a0",
+        Depth: "0 10px 15px #000, 0 5px 8px #333, 0 0 5px #666",
+        "3D": "0 1px 0 #ccc, 0 2px 0 #c9c9c9, 0 3px 0 #bbb, 0 4px 0 #b9b9b9, 0 5px 0 #aaa",
+        "Long Shadow":
+          "0 1px 0 #000, 0 2px 0 #000, 0 3px 0 #000, 0 4px 0 #000, 0 5px 0 #000, 0 6px 0 #000",
+        "Neon Purple": "0 0 10px #b300ff, 0 0 20px #b300ff, 0 0 30px #b300ff",
+        "Neon Orange": "0 0 10px #ff8c00, 0 0 20px #ff8c00, 0 0 30px #ff8c00",
+        "Neon Yellow": "0 0 10px #ff0, 0 0 20px #ff0, 0 0 30px #ff0",
+        "Neon Red": "0 0 10px #f00, 0 0 20px #f00, 0 0 30px #f00",
+        Pastel: "2px 2px 8px #ffb6c1, -1px -1px 4px #b0e0e6, 0 0 12px #f0e68c",
+        Graffiti: "3px 3px 0 #ff69b4, 6px 6px 0 #4b0082, 9px 9px 0 #00ff00",
+        Sketch: "1px 1px 0 #000, 2px 2px 0 #888, 3px 3px 0 #ccc",
+      };
+
+      function buildPanel() {
+        let html = `
+        <div class="section">
+          <h3>🎨 Background</h3>
+          <div class="row">
+            <input type="color" id="bgColor" value="#0a0c12">
+            <button onclick="document.body.style.background=document.getElementById('bgColor').value; document.getElementById('bgVideo').style.display='none'">Apply</button>
+          </div>
+          <div class="row">
+            <label class="file-label">📷 Image
+              <input type="file" id="imageFile" accept="image/*" style="display:none" onchange="applyImage(this)">
+            </label>
+            <label class="file-label">🎬 Video
+              <input type="file" id="videoFile" accept="video/*" style="display:none" onchange="applyVideo(this)">
+            </label>
+          </div>
+          <div class="row">
+            <button onclick="document.body.style.background='#0a0c12'; document.body.style.backgroundImage=''; document.getElementById('bgVideo').style.display='none'">Reset</button>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>🔤 Font</h3>
+          <div class="row">
+            <select id="fontSelect" size="4" style="width:100%" onchange="applyFont(this.value)" onmouseover="previewFont(this.value)">
+              ${fonts.map((f) => `<option value="${f}">${f}</option>`).join("")}
+            </select>
+          </div>
+          <div class="row">
+            <input type="color" id="textColor" value="#f0f6ff">
+            <button onclick="document.querySelectorAll('.top-flap, .bottom-flap, .moving-flap').forEach(el => el.style.color=document.getElementById('textColor').value)">Color</button>
+          </div>
+          <div class="row">
+            <span>Size:</span>
+            <input type="range" id="fontSize" min="30" max="120" value="80" oninput="document.querySelectorAll('.top-flap, .bottom-flap, .moving-flap').forEach(el => el.style.fontSize=this.value+'px')">
+          </div>
+          <div class="row">
+            <span>Stretch:</span>
+            <input type="range" id="fontStretch" min="0.5" max="2" step="0.1" value="1" oninput="document.querySelectorAll('.top-flap, .bottom-flap, .moving-flap').forEach(el => el.style.transform='scaleX('+this.value+')')">
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>✨ Effects (50+)</h3>
+          <div class="row" style="display:flex; flex-wrap:wrap; gap:5px;">
+            ${effects.map((e) => `<button style="flex:1 0 auto;" onclick="document.querySelectorAll('.top-flap, .bottom-flap, .moving-flap').forEach(el => el.style.textShadow='${effectStyles[e]}')">${e}</button>`).join("")}
+          </div>
+          <div class="row">
+            <button onclick="document.querySelectorAll('.top-flap, .bottom-flap, .moving-flap').forEach(el => el.style.textShadow='0 5px 8px black')">Reset Effect</button>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>⏰ Alarm</h3>
+          <div class="row">
+            <input type="time" id="alarmTime" value="08:00">
+            <button onclick="setAlarm()">Set</button>
+            <button onclick="clearAlarm()">Stop</button>
+          </div>
+        </div>
+        
+        <div class="section">
+          <h3>⏱️ Timer</h3>
+          <div class="row">
+            <input type="number" id="timerMins" value="5" min="1" max="120">
+            <button onclick="startTimer()">Start</button>
+            <button onclick="stopTimer()">Pause</button>
+          </div>
+          <div class="row">
+            <span>Break:</span>
+            <input type="number" id="breakMins" value="2" min="1" max="30">
+            <button onclick="setBreak()">Apply</button>
+          </div>
+        </div>
+      `;
+
+        panel.innerHTML = html;
+      }
+
+      // Global functions for panel
+      window.applyFont = function (font) {
+        document
+          .querySelectorAll(".top-flap, .bottom-flap, .moving-flap")
+          .forEach((el) => {
+            el.style.fontFamily = font;
+          });
+      };
+
+      window.previewFont = function (font) {
+        document
+          .querySelectorAll(".top-flap, .bottom-flap, .moving-flap")
+          .forEach((el) => {
+            el.style.fontFamily = font;
+          });
+      };
+
+      window.applyImage = function (input) {
+        if (input.files && input.files[0]) {
+          const url = URL.createObjectURL(input.files[0]);
+          document.body.style.backgroundImage = `url(${url})`;
+          document.body.style.backgroundSize = "cover";
+          document.getElementById("bgVideo").style.display = "none";
+        }
+      };
+
+      window.applyVideo = function (input) {
+        if (input.files && input.files[0]) {
+          const video = document.getElementById("bgVideo");
+          video.src = URL.createObjectURL(input.files[0]);
+          video.style.display = "block";
+          video.play();
+          document.body.style.background = "";
+          document.body.style.backgroundImage = "";
+        }
+      };
+
+      // Alarm
+      let alarmInterval = null;
+      window.setAlarm = function () {
+        const time = document.getElementById("alarmTime").value;
+        if (!time) return;
+        const [hours, mins] = time.split(":").map(Number);
+
+        if (alarmInterval) clearInterval(alarmInterval);
+
+        alarmInterval = setInterval(() => {
+          const now = new Date();
+          if (
+            now.getHours() === hours &&
+            now.getMinutes() === mins &&
+            now.getSeconds() === 0
+          ) {
+            alert("⏰ ALARM!");
+            // Simple beep
+            try {
+              const audio = new AudioContext();
+              const osc = audio.createOscillator();
+              osc.connect(audio.destination);
+              osc.start();
+              osc.stop(audio.currentTime + 0.5);
+            } catch (e) {}
+          }
+        }, 1000);
+      };
+
+      window.clearAlarm = function () {
+        if (alarmInterval) clearInterval(alarmInterval);
+      };
+
+      // Timer
+      let timerInterval = null;
+      let timerRemaining = 0;
+      let breakDuration = 2;
+
+      window.setBreak = function () {
+        breakDuration =
+          parseInt(document.getElementById("breakMins").value) || 2;
+      };
+
+      window.startTimer = function () {
+        const mins = parseInt(document.getElementById("timerMins").value) || 5;
+        timerRemaining = mins * 60;
+
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+          if (timerRemaining <= 0) {
+            clearInterval(timerInterval);
+            alert("⏳ Timer done! Take a break.");
+            timerRemaining = breakDuration * 60;
+          } else {
+            timerRemaining--;
+          }
+        }, 1000);
+      };
+
+      window.stopTimer = function () {
+        if (timerInterval) clearInterval(timerInterval);
+      };
+
+      // Menu toggle
+      menuBtn.addEventListener("click", () => {
+        panelOpen = !panelOpen;
+        if (panelOpen) {
+          buildPanel();
+          panel.style.display = "grid";
+        } else {
+          panel.style.display = "none";
+        }
+      });
+
+      // Fullscreen
+      document.getElementById("fullscreenBtn").addEventListener("click", () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      });
+    </script>
+  </body>
+</html>
